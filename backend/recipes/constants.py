@@ -1,0 +1,6 @@
+MAX_LENGHT: int = 200
+LEN_FOR_SLUG: int = 10
+MIN_SCORE: int = 1
+
+USERNAME_NAME: int = 150
+EMAIL: int = 254
