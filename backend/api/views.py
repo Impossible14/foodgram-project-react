@@ -38,16 +38,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
-    # def dispatch(self, request, *args, **kwargs):
-    #     # return super().dispatch(request, *args, **kwargs)
-    #     res = super().dispatch(request, *args, **kwargs)
-    #     from django.db import connection
-    #     print(len(connection.queries))
-    #     for i in connection.queries:
-    #         print('>>>>>', i['sql'])
-
-    #     return res
-
     def get_queryset(self):
         recipes = Recipe.objects.prefetch_related(
             'recipeingredient_set__ingredient', 'tags'

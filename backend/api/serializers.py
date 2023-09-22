@@ -1,11 +1,13 @@
-from rest_framework import serializers
+import re
+from rest_framework import serializers, status
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework.exceptions import ValidationError
 
 from recipes.models import (Tag, Recipe,
                             RecipeIngredient, Ingredient,
                             Favorite, ShoppingCart)
 from users.serializers import CustomUserSerializer
-from users.models import User
+from users.models import User, Subscribe
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -18,7 +20,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     """Таг"""
     class Meta:
-        fields = ('name', 'color', 'slug')
+        fields = ('id', 'name', 'color', 'slug')
         model = Tag
 
 
@@ -95,11 +97,55 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         many=True
     )
     image = Base64ImageField()
+    cooking_time = serializers.IntegerField()
 
     class Meta:
-        fields = ('ingredients', 'tags', 'name', 'image',
+        fields = ('id', 'ingredients', 'tags', 'name', 'image',
                   'text', 'cooking_time')
         model = Recipe
+
+    def validate(self, data):
+        ingredients_list = []
+        for ingredient in data.get('ingredients'):
+            if ingredient.get('amount') <= 0:
+                raise serializers.ValidationError(
+                    detail='Количество не может быть меньше одного',
+                    code=status.HTTP_400_BAD_REQUEST
+                )
+            ingredients_list.append(ingredient.get('id'))
+        if len(set(ingredients_list)) != len(ingredients_list):
+            raise serializers.ValidationError(
+                detail='Ингредиенты должны быть уникальны',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if data.get('cooking_time') <= 0:
+            raise serializers.ValidationError(
+                detail='Время должно быть больше нуля',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return data
+
+    def validate_tags(self, value):
+        if not value:
+            raise ValidationError(
+                detail='Нужно выбрать хотя бы один тег',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        tags_list = []
+        for tag in value:
+            if tag in tags_list:
+                raise ValidationError(
+                    detail='Теги должны быть уникальными',
+                    code=status.HTTP_400_BAD_REQUEST
+                )
+            tags_list.append(tag)
+        return value
+
+    def validate_name(self, value):
+        if not re.search(r'[a-zA-Z]', value):
+            raise ValidationError('Нельзя создавать рецепты с названиями'
+                                  'только из цифр и знаков')
+        return value
 
     @staticmethod
     def create_ingredients(ingredients, recipe):
@@ -181,6 +227,21 @@ class SubscribeSerializer(CustomUserSerializer):
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
         model = User
+
+    def validate(self, data):
+        author = self.instance
+        user = self.context.get('request').user
+        if Subscribe.objects.filter(author=author, user=user).exists():
+            raise ValidationError(
+                detail='Вы уже подписаны на этого пользователя!',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if user == author:
+            raise ValidationError(
+                detail='Вы не можете подписаться на самого себя!',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return data
 
     def get_recipes(self, obj):
         recipes = obj.recipes.all()

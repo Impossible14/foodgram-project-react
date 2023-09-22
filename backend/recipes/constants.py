@@ -1,6 +1,8 @@
 MAX_LENGHT: int = 200
-LEN_FOR_SLUG: int = 10
+LEN_FOR_COLOR: int = 7
 MIN_SCORE: int = 1
+MAX_COOKING_TIME: int = 1000
+MAX_AMOUNT: int = 10000
 
 USERNAME_NAME: int = 150
 EMAIL: int = 254

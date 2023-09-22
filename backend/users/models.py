@@ -6,23 +6,34 @@ from recipes.constants import USERNAME_NAME, EMAIL
 
 class User(AbstractUser):
     username = models.CharField(
-        'Никнейм', max_length=USERNAME_NAME, unique=True
+        max_length=USERNAME_NAME,
+        unique=True,
+        verbose_name='Никнейм'
     )
     email = models.EmailField(
-        'Почта', max_length=EMAIL, unique=True
+        max_length=EMAIL,
+        unique=True,
+        verbose_name='Почта'
     )
     first_name = models.CharField(
-        'Имя', max_length=USERNAME_NAME
+        max_length=USERNAME_NAME,
+        verbose_name='Имя'
     )
     last_name = models.CharField(
-        'Фамилия', max_length=USERNAME_NAME
+        max_length=USERNAME_NAME,
+        verbose_name='Фамилия'
     )
     password = models.CharField(
-        'Пароль', max_length=USERNAME_NAME
+        max_length=USERNAME_NAME,
+        verbose_name='Пароль'
     )
 
     class Meta:
         verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    def __str__(self):
+        return self.username
 
 
 class Subscribe(models.Model):
@@ -44,6 +55,14 @@ class Subscribe(models.Model):
             models.UniqueConstraint(
                 fields=['user', 'author'],
                 name='unique_subscribe'
-            )
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='no_self_subscribe'
+            ),
         ]
         verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'{self.user} {self.author}'
