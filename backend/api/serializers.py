@@ -18,7 +18,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """Таг"""
+    """Тег"""
     class Meta:
         fields = ('id', 'name', 'color', 'slug')
         model = Tag
@@ -143,8 +143,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         if not re.search(r'[a-zA-Z]', value):
-            raise ValidationError('Нельзя создавать рецепты с названиями'
-                                  'только из цифр и знаков')
+            raise ValidationError(
+                detail='Нельзя создавать рецепты с названиями'
+                'только из цифр и знаков',
+                code=status.HTTP_400_BAD_REQUEST)
         return value
 
     @staticmethod
@@ -209,8 +211,10 @@ class SubscriptionsSerializer(CustomUserSerializer):
         model = User
 
     def get_recipes(self, obj):
-        recipes = obj.recipes.all()
-        serializer = ShortRecipeSerializer(recipes, many=True, read_only=True)
+        serializer = ShortRecipeSerializer(
+            obj.recipes.all(),
+            many=True,
+            read_only=True)
         return serializer.data
 
     def get_recipes_count(self, obj):
@@ -244,8 +248,10 @@ class SubscribeSerializer(CustomUserSerializer):
         return data
 
     def get_recipes(self, obj):
-        recipes = obj.recipes.all()
-        serializer = ShortRecipeSerializer(recipes, many=True, read_only=True)
+        serializer = ShortRecipeSerializer(
+            obj.recipes.all(),
+            many=True,
+            read_only=True)
         return serializer.data
 
     def get_recipes_count(self, obj):

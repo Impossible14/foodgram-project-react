@@ -94,6 +94,12 @@ class Ingredient(models.Model):
         verbose_name='единица измерений')
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_name_measurement_unit'
+            )
+        ]
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
@@ -129,7 +135,8 @@ class RecipeIngredient(models.Model):
         return f'{self.recipe} {self.ingredient}'
 
 
-class Favorite(models.Model):
+class BaseFavoriteShoppingCart(models.Model):
+    """Абстрактная модель"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -138,12 +145,20 @@ class Favorite(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorite',
         verbose_name='Рецепт'
     )
 
     class Meta:
-        ordering = ('id',)
+        abstract = True
+
+    def __str__(self):
+        return f'{self.user} {self.recipe}'
+
+
+class Favorite(BaseFavoriteShoppingCart):
+
+    class Meta:
+        default_related_name = 'favorite'
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
@@ -153,25 +168,11 @@ class Favorite(models.Model):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
 
-    def __str__(self):
-        return f'{self.user} {self.recipe}'
 
-
-class ShoppingCart(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Пользователь'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='shopping_recipe',
-        verbose_name='Рецепт'
-    )
+class ShoppingCart(BaseFavoriteShoppingCart):
 
     class Meta:
-        ordering = ('id',)
+        default_related_name = 'shopping_recipe'
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
@@ -180,6 +181,3 @@ class ShoppingCart(models.Model):
         ]
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Список покупок'
-
-    def __str__(self):
-        return f'{self.user} {self.recipe}'
