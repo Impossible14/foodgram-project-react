@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = get_random_secret_key()
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['84.252.139.245', '127.0.0.1', 'localhost', 'produkt-assistent.myddns.me']
 
