@@ -28,15 +28,16 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
-> ## Сайт доступен локально по ссылке
-```
-http://127.0.0.1:8000/
-```
 > # Наполнение базы данных:
 В репозитории, в директории ```/backend/recipes/data```, подготовлен файл в формате ```csv``` с ингредиентами. 
 Для заполния базы данных контентом из приложенных csv-файлов необходимо запустить файл ```load_cvs_data.py```, расположенный в папке ```recipes/management/commands```:
 ```
 python manage.py load_cvs_data
+```
+
+> # Сайт доступен по ссылке:
+```
+produkt-assistent.myddns.me
 ```
 
 > # Автор
