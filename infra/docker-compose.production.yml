@@ -32,7 +32,7 @@ services:
 
   backend:
     env_file: .env
-    image: impossible11/foodgram_backend
+    image: impossible11/foodgram2_backend
     depends_on:
       - db
     volumes:
