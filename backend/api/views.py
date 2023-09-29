@@ -38,9 +38,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
     def get_queryset(self):
         recipes = Recipe.objects.prefetch_related(
             'recipeingredient_set__ingredient', 'tags'

@@ -2,8 +2,6 @@ import re
 from rest_framework import serializers, status
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.exceptions import ValidationError
-from django.db import transaction
-from django.shortcuts import get_object_or_404
 
 from recipes.models import (Tag, Recipe,
                             RecipeIngredient, Ingredient,
