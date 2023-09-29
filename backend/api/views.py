@@ -33,10 +33,13 @@ class TagViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Recipe"""
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def get_queryset(self):
         recipes = Recipe.objects.prefetch_related(
@@ -45,9 +48,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return recipes
 
     def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'update':
-            return RecipeCreateSerializer
-        return RecipeSerializer
+        if self.action in ('list', 'retrieve'):
+            return RecipeSerializer
+        return RecipeCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

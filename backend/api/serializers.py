@@ -2,6 +2,8 @@ import re
 from rest_framework import serializers, status
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.exceptions import ValidationError
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from recipes.models import (Tag, Recipe,
                             RecipeIngredient, Ingredient,
@@ -98,31 +100,40 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField()
+    author = CustomUserSerializer(read_only=True)
 
     class Meta:
-        fields = ('id', 'ingredients', 'tags', 'name', 'image',
+        fields = ('id', 'ingredients', 'tags', 'author', 'name', 'image',
                   'text', 'cooking_time')
         model = Recipe
 
     def validate(self, data):
+        if not data:
+            raise serializers.ValidationError(
+                detail='Отсутствуют ингридиенты!',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        ingredients = self.initial_data.get('ingredients')
         ingredients_list = []
-        for ingredient in data.get('ingredients'):
-            if ingredient.get('amount') <= 0:
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            if ingredient_id in ingredients_list:
+                raise serializers.ValidationError(
+                    detail='Ингредиенты должны быть уникальны',
+                    code=status.HTTP_400_BAD_REQUEST
+                )
+            ingredients_list.append(ingredient_id)
+            if int(ingredient.get('amount')) < 1:
                 raise serializers.ValidationError(
                     detail='Количество не может быть меньше одного',
                     code=status.HTTP_400_BAD_REQUEST
                 )
-            ingredients_list.append(ingredient.get('id'))
-        if len(set(ingredients_list)) != len(ingredients_list):
-            raise serializers.ValidationError(
-                detail='Ингредиенты должны быть уникальны',
-                code=status.HTTP_400_BAD_REQUEST
-            )
         if data.get('cooking_time') <= 0:
             raise serializers.ValidationError(
                 detail='Время должно быть больше нуля',
                 code=status.HTTP_400_BAD_REQUEST
             )
+
         return data
 
     def validate_tags(self, value):
@@ -142,7 +153,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_name(self, value):
-        if not re.search(r'[a-zA-Z]', value):
+        if not re.search(r'[a-zA-Zа-яА-ЯёЁ]', value):
             raise ValidationError(
                 detail='Нельзя создавать рецепты с названиями'
                 'только из цифр и знаков',
@@ -166,6 +177,17 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         self.create_ingredients(ingredients, recipe)
         return recipe
 
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        instance = super().update(instance, validated_data)
+        instance.tags.clear()
+        instance.tags.set(tags)
+        instance.ingredients.clear()
+        self.create_ingredients(ingredients, instance)
+        instance.save()
+        return instance
+
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
@@ -173,15 +195,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             instance,
             context=context
         ).data
-
-    def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        instance.tags.clear()
-        instance.tags.set(tags)
-        RecipeIngredient.objects.filter(recipe=instance).delete()
-        self.create_ingredients(ingredients, instance)
-        return super().update(instance, validated_data)
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
