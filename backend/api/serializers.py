@@ -131,7 +131,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 detail='Время должно быть больше нуля',
                 code=status.HTTP_400_BAD_REQUEST
             )
-
         return data
 
     def validate_tags(self, value):
@@ -151,7 +150,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_name(self, value):
-        if not re.search(r'[a-zA-Zа-яА-ЯёЁ]', value):
+        if not re.search(r'^[a-zA-Zа-яА-ЯёЁ]+$', value):
             raise ValidationError(
                 detail='Нельзя создавать рецепты с названиями'
                 'только из цифр и знаков',
