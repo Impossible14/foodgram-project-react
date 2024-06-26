@@ -35,10 +35,5 @@ python manage.py runserver
 python manage.py load_cvs_data
 ```
 
-> # Сайт доступен по ссылке:
-```
-produkt-assistent.myddns.me
-```
-
 > # Автор
 * **Максим Матвеев** (https://github.com/Impossible14)
